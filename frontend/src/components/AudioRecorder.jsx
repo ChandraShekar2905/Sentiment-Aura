@@ -1,110 +1,115 @@
-import { useState, useRef, useEffect } from 'react';
-import { createClient } from '@deepgram/sdk';
+import { useState, useRef } from 'react';
 
-function AudioRecorder({ onTranscript, onFinalTranscript }) {
+function AudioRecorder({ onTranscriptUpdate, onRecordingStart }) {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [error, setError] = useState('');
   
   const mediaRecorderRef = useRef(null);
   const socketRef = useRef(null);
-  const deepgramRef = useRef(null);
-
-  useEffect(() => {
-    // Cleanup on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
-    };
-  }, []);
 
   const startRecording = async () => {
     try {
-      // Get microphone access
+      setError('');
+      
+      // Clear text when starting new recording
+      if (onRecordingStart) {
+        onRecordingStart();
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: true 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 16000
+        }
       });
 
-      // Initialize Deepgram
-      const deepgram = createClient(import.meta.env.VITE_DEEPGRAM_API_KEY);
-      deepgramRef.current = deepgram;
+      console.log('Microphone access granted');
 
-      // Create WebSocket connection to Deepgram
-      const connection = deepgram.listen.live({
-        model: 'nova-2',
-        language: 'en-US',
-        smart_format: true,
-        interim_results: true,
-      });
+      const apiKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error('Deepgram API key not found in .env file');
+      }
 
-      socketRef.current = connection;
+      console.log('API key found, connecting to Deepgram...');
 
-      // Handle incoming transcripts
-      connection.on('open', () => {
-        console.log('Deepgram connection opened');
-        
-        // Setup MediaRecorder to send audio
+      const ws = new WebSocket(
+        'wss://api.deepgram.com/v1/listen?' + new URLSearchParams({
+          model: 'nova-2',
+          language: 'en-US',
+          smart_format: 'true',
+          interim_results: 'false',
+        }),
+        ['token', apiKey]
+      );
+
+      socketRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('Deepgram WebSocket connected');
+
         const mediaRecorder = new MediaRecorder(stream, {
           mimeType: 'audio/webm'
         });
 
         mediaRecorderRef.current = mediaRecorder;
 
-        mediaRecorder.addEventListener('dataavailable', (event) => {
-          if (event.data.size > 0 && connection.getReadyState() === 1) {
-            connection.send(event.data);
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+            ws.send(event.data);
           }
-        });
+        };
 
-        mediaRecorder.start(250); // Send data every 250ms
-      });
+        mediaRecorder.start(250);
+        console.log('Recording started');
+      };
 
-      connection.on('transcript', (data) => {
-        const transcriptText = data.channel.alternatives[0].transcript;
-        
-        if (transcriptText && transcriptText.trim() !== '') {
-          setTranscript(prev => {
-            const newTranscript = data.is_final 
-              ? prev + ' ' + transcriptText 
-              : prev + ' ' + transcriptText;
-            return newTranscript;
-          });
-
-          // Call callback for display
-          if (onTranscript) {
-            onTranscript(transcriptText, data.is_final);
+      ws.onmessage = (message) => {
+        try {
+          const data = JSON.parse(message.data);
+          const transcriptText = data.channel?.alternatives?.[0]?.transcript;
+          
+          if (transcriptText && transcriptText.trim() !== '') {
+            console.log('Received transcript:', transcriptText);
+            
+            if (onTranscriptUpdate) {
+              onTranscriptUpdate(transcriptText);
+            }
           }
-
-          // If final transcript, trigger sentiment analysis
-          if (data.is_final && onFinalTranscript) {
-            onFinalTranscript(transcriptText);
-          }
+        } catch (err) {
+          console.error('Error parsing transcript:', err);
         }
-      });
+      };
 
-      connection.on('error', (error) => {
-        console.error('Deepgram error:', error);
-      });
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setError('WebSocket connection error');
+      };
 
-      connection.on('close', () => {
-        console.log('Deepgram connection closed');
-      });
+      ws.onclose = () => {
+        console.log('WebSocket closed');
+      };
 
       setIsRecording(true);
 
     } catch (error) {
       console.error('Error starting recording:', error);
-      alert('Failed to access microphone. Please grant permission.');
+      setError(error.message);
+      alert('Failed to start recording: ' + error.message);
     }
   };
 
   const stopRecording = () => {
+    console.log('Stopping recording...');
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
 
-    if (socketRef.current) {
-      socketRef.current.finish();
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.close();
     }
 
     setIsRecording(false);
@@ -119,10 +124,9 @@ function AudioRecorder({ onTranscript, onFinalTranscript }) {
         {isRecording ? '⏹ Stop Recording' : '🎤 Start Recording'}
       </button>
 
-      {transcript && (
-        <div className="transcript">
-          <h3>Transcript:</h3>
-          <p>{transcript}</p>
+      {error && (
+        <div style={{ color: '#f44336', marginTop: '10px', padding: '10px', background: '#2a2a2a', borderRadius: '6px' }}>
+          Error: {error}
         </div>
       )}
     </div>
