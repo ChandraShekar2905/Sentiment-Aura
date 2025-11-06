@@ -26,7 +26,7 @@ function AudioRecorder({ onTranscriptUpdate, onRecordingStart }) {
       const apiKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
       
       if (!apiKey) {
-        throw new Error('Deepgram API key not found');
+        throw new Error('Deepgram API key not found in .env file');
       }
 
       const ws = new WebSocket(
@@ -80,19 +80,19 @@ function AudioRecorder({ onTranscriptUpdate, onRecordingStart }) {
       setIsRecording(true);
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error starting recording:', error);
       setError(error.message);
-      alert('Failed to access microphone');
+      alert('Failed to start recording: ' + error.message);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current?.state !== 'inactive') {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
 
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.close();
     }
 
@@ -100,22 +100,19 @@ function AudioRecorder({ onTranscriptUpdate, onRecordingStart }) {
   };
 
   return (
-    <div className="recorder-container">
+    <div style={{ textAlign: 'center' }}>
       <button 
         onClick={isRecording ? stopRecording : startRecording}
         className={`record-button ${isRecording ? 'recording' : ''}`}
         aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-        title={isRecording ? 'Stop recording' : 'Start recording'}
       >
         {isRecording ? (
-          // Stop icon (square)
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
-            <rect x="6" y="6" width="10" height="10" rx="2"/>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <rect x="6" y="6" width="8" height="8" rx="1.5"/>
           </svg>
         ) : (
-          // Record icon (circle)
-          <svg width="26" height="26" viewBox="0 0 26 26" fill="currentColor">
-            <circle cx="13" cy="13" r="9"/>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="12" r="7"/>
           </svg>
         )}
       </button>

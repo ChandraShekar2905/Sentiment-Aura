@@ -12,8 +12,10 @@
   "dependencies": {
     "@deepgram/sdk": "^4.11.2",
     "axios": "^1.13.2",
+    "p5": "^2.0.5",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-p5": "^1.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
