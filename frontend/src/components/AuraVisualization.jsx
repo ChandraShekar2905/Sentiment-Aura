@@ -15,9 +15,11 @@ function AuraVisualization({ sentiment = 0 }) {
 
     const sketch = (p) => {
       let particles = [];
-      const numParticles = 300; // Reduced for stability
+      let flowfield = [];
+      let cols, rows;
+      const numParticles = 2500;
       let time = 0;
-      let currentColor = { r: 150, g: 180, b: 255 };
+      let currentColor = { r: 140, g: 140, b: 160 };
 
       class Particle {
         constructor() {
@@ -25,41 +27,65 @@ function AuraVisualization({ sentiment = 0 }) {
           this.y = p.random(p.height);
           this.vx = 0;
           this.vy = 0;
-          this.prevX = this.x;
-          this.prevY = this.y;
-          this.alpha = p.random(100, 200);
+          this.px = this.x;
+          this.py = this.y;
+          this.a = p.random(100, 200);
         }
 
-        update(noiseScale, noiseStr) {
-          // Get flow direction from Perlin noise
-          const angle = p.noise(this.x * noiseScale, this.y * noiseScale, time) * p.TWO_PI * noiseStr;
+        update() {
+          this.vx *= 0.97;
+          this.vy *= 0.97;
           
-          this.vx += p.cos(angle) * 0.3;
-          this.vy += p.sin(angle) * 0.3;
-          
-          // Limit speed
-          const speed = p.sqrt(this.vx * this.vx + this.vy * this.vy);
-          if (speed > 2) {
-            this.vx = (this.vx / speed) * 2;
-            this.vy = (this.vy / speed) * 2;
-          }
-          
-          this.prevX = this.x;
-          this.prevY = this.y;
+          this.px = this.x;
+          this.py = this.y;
           this.x += this.vx;
           this.y += this.vy;
           
-          // Wrap edges
-          if (this.x < 0) { this.x = p.width; this.prevX = this.x; }
-          if (this.x > p.width) { this.x = 0; this.prevX = this.x; }
-          if (this.y < 0) { this.y = p.height; this.prevY = this.y; }
-          if (this.y > p.height) { this.y = 0; this.prevY = this.y; }
+          if (this.x < 0) { this.x = p.width; this.px = this.x; }
+          else if (this.x > p.width) { this.x = 0; this.px = this.x; }
+          if (this.y < 0) { this.y = p.height; this.py = this.y; }
+          else if (this.y > p.height) { this.y = 0; this.py = this.y; }
+        }
+
+        follow(field, columns) {
+          const x = p.floor(this.x / 20);
+          const y = p.floor(this.y / 20);
+          const index = x + y * columns;
+          const force = field[index];
+          if (force) {
+            this.vx += force.x;
+            this.vy += force.y;
+          }
+        }
+
+        addCircularForce(centerX, centerY, strength) {
+          // Calculate vector to center
+          const dx = centerX - this.x;
+          const dy = centerY - this.y;
+          
+          // Create tangent force (perpendicular) for circular motion
+          const tangentX = -dy;
+          const tangentY = dx;
+          
+          // Normalize and apply
+          const mag = p.sqrt(tangentX * tangentX + tangentY * tangentY);
+          if (mag > 0) {
+            this.vx += (tangentX / mag) * strength;
+            this.vy += (tangentY / mag) * strength;
+          }
+          
+          // Add slight inward pull to maintain orbit
+          const dist = p.sqrt(dx * dx + dy * dy);
+          if (dist > 0) {
+            this.vx += (dx / dist) * strength * 0.15;
+            this.vy += (dy / dist) * strength * 0.15;
+          }
         }
 
         show(strokeW) {
-          p.stroke(currentColor.r, currentColor.g, currentColor.b, this.alpha);
+          p.stroke(currentColor.r, currentColor.g, currentColor.b, this.a);
           p.strokeWeight(strokeW);
-          p.line(this.prevX, this.prevY, this.x, this.y);
+          p.line(this.px, this.py, this.x, this.y);
         }
       }
 
@@ -67,73 +93,109 @@ function AuraVisualization({ sentiment = 0 }) {
         const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
         canvas.parent(canvasContainerRef.current);
         
+        cols = p.floor(p.width / 20);
+        rows = p.floor(p.height / 20);
+        flowfield = new Array(cols * rows);
+        
         for (let i = 0; i < numParticles; i++) {
-          particles.push(new Particle());
+          particles[i] = new Particle();
         }
       };
 
       p.draw = () => {
         const s = sentimentRef.current;
+        const centerX = p.width / 2;
+        const centerY = p.height / 2;
 
-        // Determine visual parameters based on sentiment
-        let targetColor, noiseScale, noiseStrength, strokeWeight, bgAlpha;
+        let targetColor, noiseScale, noiseStrength, strokeWeight, bgAlpha, circularStrength;
 
         if (s > 0.5) {
-          // VERY POSITIVE - Bright yellow, smooth large waves, energetic
-          targetColor = { r: 255, g: 235, b: 100 };
-          noiseScale = 0.0015; // LARGE smooth waves
-          noiseStrength = 1.5; // Gentle curves
-          strokeWeight = 2.5; // Thick, visible trails
-          bgAlpha = 30; // Long trails
-        } else if (s > 0.2) {
-          // POSITIVE - Orange, flowing, warm
-          targetColor = { r: 255, g: 180, b: 80 };
+          // VERY POSITIVE - Bright yellow, STRONG CIRCULAR MOTION
+          targetColor = { r: 255, g: 210, b: 80 };
           noiseScale = 0.003;
-          noiseStrength = 2;
+          noiseStrength = 1;
           strokeWeight = 2;
-          bgAlpha = 35;
+          bgAlpha = 40;
+          circularStrength = 0.25; // STRONG orbital force
+        } else if (s > 0.2) {
+          // POSITIVE - Orange, MODERATE CIRCULAR MOTION
+          targetColor = { r: 250, g: 150, b: 70 };
+          noiseScale = 0.004;
+          noiseStrength = 2;
+          strokeWeight = 1.8;
+          bgAlpha = 45;
+          circularStrength = 0.15; // Medium orbital force
         } else if (s > -0.2) {
-          // NEUTRAL - Purple/cyan, balanced
-          targetColor = { r: 160, g: 190, b: 255 };
+          // NEUTRAL - Purple, pure Perlin flow (no circular)
+          targetColor = { r: 140, g: 140, b: 160 };
           noiseScale = 0.005;
           noiseStrength = 3;
           strokeWeight = 1.5;
-          bgAlpha = 40;
+          bgAlpha = 50;
+          circularStrength = 0; // No orbital force
         } else if (s > -0.5) {
-          // NEGATIVE - Blue, turbulent
-          targetColor = { r: 100, g: 130, b: 255 };
-          noiseScale = 0.008; // Smaller, tighter patterns
-          noiseStrength = 5; // More curves
-          strokeWeight = 2;
-          bgAlpha = 45;
+          // NEGATIVE - Blue, chaotic Perlin
+          targetColor = { r: 100, g: 120, b: 200 };
+          noiseScale = 0.008;
+          noiseStrength = 5;
+          strokeWeight = 1.8;
+          bgAlpha = 55;
+          circularStrength = 0;
         } else {
-          // VERY NEGATIVE - Deep blue, very chaotic, heavy
-          targetColor = { r: 60, g: 100, b: 255 };
-          noiseScale = 0.012; // SMALL chaotic turbulence
-          noiseStrength = 8; // Sharp, jagged turns
-          strokeWeight = 3; // Heavy, thick lines
-          bgAlpha = 55; // Shorter, choppier trails
+          // VERY NEGATIVE - Deep blue, very chaotic
+          targetColor = { r: 70, g: 100, b: 180 };
+          noiseScale = 0.012;
+          noiseStrength = 7;
+          strokeWeight = 2;
+          bgAlpha = 60;
+          circularStrength = 0;
         }
 
-        // Smooth interpolation
         currentColor.r += (targetColor.r - currentColor.r) * 0.1;
         currentColor.g += (targetColor.g - currentColor.g) * 0.1;
         currentColor.b += (targetColor.b - currentColor.b) * 0.1;
 
-        // Clear background
-        p.background(5, 5, 10, bgAlpha);
+        p.background(244, 243, 243, bgAlpha);
 
-        // Update and draw particles
-        particles.forEach(part => {
-          part.update(noiseScale, noiseStrength);
+        // Generate Perlin noise flow field
+        let yoff = 0;
+        for (let y = 0; y < rows; y++) {
+          let xoff = 0;
+          for (let x = 0; x < cols; x++) {
+            const index = x + y * cols;
+            const angle = p.noise(xoff, yoff, time) * p.TWO_PI * noiseStrength;
+            const vx = p.cos(angle) * 0.5;
+            const vy = p.sin(angle) * 0.5;
+            flowfield[index] = { x: vx, y: vy };
+            xoff += noiseScale;
+          }
+          yoff += noiseScale;
+        }
+
+        // Update and render particles
+        for (let i = 0; i < numParticles; i++) {
+          const part = particles[i];
+          
+          // Follow Perlin flow field
+          part.follow(flowfield, cols);
+          
+          // Add circular/orbital force when happy!
+          if (circularStrength > 0) {
+            part.addCircularForce(centerX, centerY, circularStrength);
+          }
+          
+          part.update();
           part.show(strokeWeight);
-        });
+        }
 
         time += 0.005;
       };
 
       p.windowResized = () => {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
+        cols = p.floor(p.width / 20);
+        rows = p.floor(p.height / 20);
+        flowfield = new Array(cols * rows);
       };
     };
 

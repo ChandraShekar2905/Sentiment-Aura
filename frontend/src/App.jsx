@@ -178,15 +178,16 @@ function App() {
 
       {/* Centered Content */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
+        padding: '40px 20px',
         zIndex: 10
       }}>
         <div className="app">
@@ -253,15 +254,19 @@ function App() {
                   <div className="spinner"></div>
                 ) : isRecording ? (
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <rect x="6" y="6" width="8" height="8" rx="1.5"/>
+                    <rect x="6" y="6" width="8" height="8" rx="2"/>
                   </svg>
                 ) : text.trim() ? (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M3 10L17 10M17 10L12 5M17 10L12 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 2L9 11" strokeLinecap="round"/>
+                    <path d="M18 2L12 18L9 11L2 8L18 2Z" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <circle cx="10" cy="10" r="7"/>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="7.5" y="3" width="5" height="9" rx="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M5 10C5 12.7614 7.23858 15 10 15C12.7614 15 15 12.7614 15 10" strokeLinecap="round"/>
+                    <line x1="10" y1="15" x2="10" y2="18" strokeLinecap="round"/>
+                    <line x1="7" y1="18" x2="13" y2="18" strokeLinecap="round"/>
                   </svg>
                 )}
               </button>
