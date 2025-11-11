@@ -8,7 +8,7 @@ A full-stack web application that performs real-time audio transcription and vis
 
 ---
 
-## 🌟 Overview
+## Overview
 
 Sentiment Aura captures your voice, transcribes it in real-time, analyzes the emotional sentiment using AI, and transforms those emotions into a living, breathing visual experience. The Perlin noise visualization dynamically responds to your emotional tone through color, flow patterns, and motion characteristics.
 
@@ -255,7 +255,7 @@ The Perlin noise visualization responds to emotional sentiment through multiple 
 
 ---
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Backend API
 
