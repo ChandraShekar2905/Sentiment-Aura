@@ -27,7 +27,7 @@ function App() {
     
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8000/process_text', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/process_text`, {
         text: textToAnalyze
       });
       
