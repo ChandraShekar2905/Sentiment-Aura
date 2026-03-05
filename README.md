@@ -5,14 +5,14 @@
 A full-stack web application that performs real-time audio transcription and visualizes emotional sentiment as a beautiful, generative Perlin noise flow field. Built for Memory Machines.
 
 ![Sentiment Aura Demo](demo-screenshot.png)
+
 ---
 
-## Live Demo
+## Demo
 
-**Application:** https://cs2905.com  
-**Backend API:** https://api.cs2905.com  
-**GitHub Repository:** [https://github.com/ChandraShekar2905/Sentiment-Aura]  
+**GitHub Repository:** [https://github.com/ChandraShekar2905/Sentiment-Aura](https://github.com/ChandraShekar2905/Sentiment-Aura)
 
+> This application was previously deployed on AWS (EC2, S3, CloudFront, Route 53). See the Quick Start section below to run it locally.
 
 ---
 
@@ -20,7 +20,7 @@ A full-stack web application that performs real-time audio transcription and vis
 
 Sentiment Aura captures your voice, transcribes it in real-time, analyzes the emotional sentiment using AI, and transforms those emotions into a living, breathing visual experience. The Perlin noise visualization dynamically responds to your emotional tone through color, flow patterns, and motion characteristics.
 
-**Try it now:** Visit https://cs2905.com, click the microphone, and speak naturally. Watch how your emotions transform into visual art in real-time.
+**To try it:** Clone the repository and follow the Quick Start guide below. Grant microphone permission, click the mic icon, and speak naturally. Watch how your emotions transform into visual art in real-time.
 
 ---
 
@@ -97,7 +97,7 @@ Sentiment Aura captures your voice, transcribes it in real-time, analyzes the em
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/sentiment-aura.git
+git clone https://github.com/ChandraShekar2905/Sentiment-Aura.git
 cd sentiment-aura
 ```
 
@@ -149,7 +149,7 @@ source venv/bin/activate
 python3 -m uvicorn main:app --reload --port 8000
 ```
 
-Backend will run at: `http://localhost:8000`  
+Backend will run at: `http://localhost:8000`
 API docs available at: `http://localhost:8000/docs`
 
 #### Start Frontend (Terminal 2)
@@ -167,7 +167,7 @@ Open your browser to `http://localhost:5173` and grant microphone permission whe
 
 ## How to Use
 
-1. **Click the microphone icon** 🎤 to start recording
+1. **Click the microphone icon** to start recording
 2. **Speak naturally** - your words will be transcribed in real-time
 3. **Watch the magic happen:**
    - Transcript appears as you speak
@@ -195,7 +195,7 @@ Open your browser to `http://localhost:5173` and grant microphone permission whe
        │                         ↓
        │                    Transcript
        │                         ↓
-       └─── HTTPS/REST ───→ FastAPI Backend (api.cs2905.com)
+       └─── HTTPS/REST ───→ FastAPI Backend (localhost:8000)
                                  ↓
                             Groq LLM API (Sentiment Analysis)
                                  ↓
@@ -278,7 +278,7 @@ The Perlin noise visualization responds to emotional sentiment through multiple 
 **Perlin Noise Engine:**
 - **3D Noise Field:** (x, y, time) creates organic, continuous patterns
 - **2500 Particles:** Each follows force vectors from the noise field
-- **Grid-based Forces:** Flow field calculated on a grid (width/20 × height/20)
+- **Grid-based Forces:** Flow field calculated on a grid (width/20 x height/20)
 - **Smooth Interpolation:** All parameters (color, speed, noise) transition gradually
 - **Trail Effect:** Semi-transparent background creates motion trails
 - **Edge Wrapping:** Particles wrap around screen edges for infinite flow
@@ -386,7 +386,7 @@ Health check endpoint for monitoring.
 #### `GET /docs`
 Interactive API documentation (Swagger UI).
 
-Access at: https://api.cs2905.com/docs
+Access at: `http://localhost:8000/docs` (when running locally)
 
 ---
 
@@ -459,15 +459,13 @@ Real-time provides:
 
 ### Performance Metrics
 
-Measured on MacBook Pro M1:
-
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Transcription Latency | <500ms | ~300ms | ✅ Excellent |
-| Backend Response Time | <1000ms | 300-600ms | ✅ Excellent |
-| Visualization FPS | 50-60 | 55-60 | ✅ Optimal |
-| End-to-End Latency | <2s | ~1.5s | ✅ Great |
-| Memory Usage | Stable | Stable | ✅ No leaks |
+| Transcription Latency | <500ms | ~300ms | Excellent |
+| Backend Response Time | <1000ms | 300-600ms | Excellent |
+| Visualization FPS | 50-60 | 55-60 | Optimal |
+| End-to-End Latency | <2s | ~1.5s | Great |
+| Memory Usage | Stable | Stable | No leaks |
 
 ---
 
@@ -480,8 +478,7 @@ Measured on MacBook Pro M1:
 VITE_DEEPGRAM_API_KEY=your_deepgram_api_key_here
 
 # Backend API URL
-VITE_BACKEND_URL=http://localhost:8000  # Development
-# VITE_BACKEND_URL=https://api.cs2905.com  # Production
+VITE_BACKEND_URL=http://localhost:8000
 ```
 
 ### Backend (.env)
@@ -491,7 +488,7 @@ VITE_BACKEND_URL=http://localhost:8000  # Development
 GROQ_API_KEY=your_groq_api_key_here
 
 # CORS allowed origins (comma-separated)
-ALLOWED_ORIGINS=http://localhost:5173,https://cs2905.com,https://www.cs2905.com
+ALLOWED_ORIGINS=http://localhost:5173
 ```
 
 **Security Note:** Never commit `.env` files to version control. Always use `.env.example` as a template.
@@ -500,9 +497,9 @@ ALLOWED_ORIGINS=http://localhost:5173,https://cs2905.com,https://www.cs2905.com
 
 ## Known Limitations
 
-1. **HTTPS Required in Production:** Deepgram requires HTTPS for microphone access (localhost OK for development)
+1. **HTTPS Required for Deployed Environments:** Deepgram requires HTTPS for microphone access (localhost is OK for development)
 2. **Browser Support:** Requires Web Audio API and WebSocket support (all modern browsers)
-3. **API Rate Limits:** 
+3. **API Rate Limits:**
    - Groq free tier: 30 requests/minute
    - Deepgram: $200 free credits (~22 hours of audio)
 4. **Microphone Permission:** User must grant permission for voice input
@@ -532,7 +529,7 @@ ALLOWED_ORIGINS=http://localhost:5173,https://cs2905.com,https://www.cs2905.com
 
 ## Cost Breakdown
 
-**Monthly operational costs** (post-free tier):
+**Monthly operational costs** (when deployed):
 
 | Service | Cost | Notes |
 |---------|------|-------|
@@ -559,7 +556,7 @@ ALLOWED_ORIGINS=http://localhost:5173,https://cs2905.com,https://www.cs2905.com
 
 ---
 
-## 📄 License
+## License
 
 MIT License - See LICENSE file for details
 
@@ -569,13 +566,12 @@ Copyright (c) 2025 Chandra Shekar Reddy
 
 ## Author
 
-**Chandra Shekar Reddy Kusukunthla**  
+**Chandra Shekar Reddy Kusukunthla**
 Full-Stack Developer | AI Enthusiast | Northeastern University
 
 - **Email:** kusukunthla.c@northeastern.edu
 - **GitHub:** [ChandraShekar2905](https://github.com/ChandraShekar2905)
 - **LinkedIn:** [Chandra Shekar K](https://www.linkedin.com/in/chandrashekarreddykusukunthla/)
-- **Portfolio:** [Add your portfolio link]
 
 ---
 
@@ -588,6 +584,6 @@ This is a portfolio project for Memory Machines, but feedback and suggestions ar
 
 ---
 
-**Built with ❤️ for Memory Machines**
+**Built for Memory Machines**
 
 *Transforming emotions into art, one voice at a time.*
